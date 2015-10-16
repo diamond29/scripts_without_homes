@@ -1,8 +1,6 @@
 #!/usr/bin/env ruby
 
 require 'thor'
-require 'rake/file_utils'
-require 'pry-byebug'
 
 class MirrorSvnGit < Thor
   default_task :mirror
@@ -10,9 +8,11 @@ class MirrorSvnGit < Thor
   desc 'mirror LOCAL_DIR SVN_BRANCH_PREFIX GIT_REMOTE', 'mirror branches from svn repo to a git repo'
   def mirror(local_dir, svn_branch_prefix, git_remote)
     Dir.chdir(local_dir) do
+      `git svn fetch`
+
       git_branches = `git branch -a`.split("\n").select do |branch_name|
-        branch_name.include?(svn_branch_prefix)
-          && !branch_name.include?('@')
+        branch_name.include?(svn_branch_prefix) &&
+          !branch_name.include?('@')
       end
 
       git_branches.each do |branch|
