@@ -14,22 +14,24 @@ class MirrorSvnGit < Thor
 
       `git checkout master`
       `git merge #{svn_branch_prefix}/trunk`
-      `git push origin`
+      `git push origin master`
     end
   end
 
-  def push_svn_branches(svn_branch_prefix, git_remote)
-    git_branches = `git branch -a`.split("\n").select do |branch_name|
-      branch_name.include?(svn_branch_prefix) &&
-        !branch_name.include?('@')
-    end
+  no_commands do
+    def push_svn_branches(svn_branch_prefix, git_remote)
+      git_branches = `git branch -a`.split("\n").select do |branch_name|
+        branch_name.include?(svn_branch_prefix) &&
+          !branch_name.include?('@')
+      end
 
-    git_branches.each do |branch|
-      branch.gsub!(/\s+remotes\/#{svn_branch_prefix}\//, '')
-    end
+      git_branches.each do |branch|
+        branch.gsub!(/\s+remotes\/#{svn_branch_prefix}\//, '')
+      end
 
-    git_branches.each do |branch|
-      `git push #{git_remote} #{svn_branch_prefix}/#{branch}`
+      git_branches.each do |branch|
+        `git push #{git_remote} #{svn_branch_prefix}/#{branch}`
+      end
     end
   end
 end
