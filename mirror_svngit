@@ -10,6 +10,7 @@ class MirrorSvnGit < Thor
     Dir.chdir(local_dir) do
       `git svn fetch`
 
+      delete_old_svn_branches(git_remote)
       push_svn_branches(git_remote)
 
       `git checkout master`
@@ -19,11 +20,11 @@ class MirrorSvnGit < Thor
   end
 
   no_commands do
-    def push_svn_branches(git_remote)
-      svn_branches = `git branch -a`.split("\n").select do |branch_name|
-        is_svn_branch? branch_name
-      end
+    def delete_old_svn_branches(git_remote)
 
+    end
+
+    def push_svn_branches(git_remote)
       svn_branches.each do |branch|
         `git push #{git_remote} #{branch}`
       end
@@ -31,6 +32,19 @@ class MirrorSvnGit < Thor
 
     def is_svn_branch?(branch_name)
       branch_name =~ /remotes\/[a-zA-Z\_\-]+$/
+    end
+
+    def old_svn_branches
+      svn_branches.select do |branch_name|
+        svn_url = `git show-branch #{branch_name}`.match(/\s(https://\S)@/)
+        binding.pry
+      end
+    end
+
+    def svn_branches(git_remote)
+      `git branch -a`.split("\n").select do |branch_name|
+        is_svn_branch? branch_name
+      end
     end
   end
 end
