@@ -21,7 +21,14 @@ class MirrorSvnGit < Thor
 
   no_commands do
     def delete_old_svn_branches(git_remote)
-
+      svn_branches.each do |branch_name|
+        svn_info = `svn info #{svn_branch_url(branch_name)}`
+        if svn_info.empty?
+          `git push --delete #{git_remote} #{short_svn_name(branch_name)}`
+          FileUtils.rm_rf("#{Dir.pwd}/.git/svn/refs/remotes/#{short_svn_name(branch_name)}")
+          FileUtils.rm_rf("#{Dir.pwd}/.git/refs/remotes/#{short_svn_name(branch_name)}")
+        end
+      end
     end
 
     def push_svn_branches(git_remote)
@@ -34,17 +41,19 @@ class MirrorSvnGit < Thor
       branch_name =~ /remotes\/[a-zA-Z\_\-]+$/
     end
 
-    def old_svn_branches
-      svn_branches.select do |branch_name|
-        svn_url = `git show-branch #{branch_name}`.match(/\s(https://\S)@/)
-        binding.pry
-      end
+    def svn_branch_url(branch_name)
+      `git checkout #{branch_name}`
+      `git svn info`.match(/URL: (https:\/\/\S+)/).captures[0]
     end
 
-    def svn_branches(git_remote)
+    def svn_branches
       `git branch -a`.split("\n").select do |branch_name|
         is_svn_branch? branch_name
       end
+    end
+
+    def short_svn_name(branch_name)
+      branch_name.gsub(/\s+remotes\//, '')
     end
   end
 end
